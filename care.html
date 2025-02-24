@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skincare Routine Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .checkmark { cursor: pointer; font-size: 20px; }
+        .checked { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Skincare Routine Tracker</h2>
+    
+    <button onclick="addColumn('morning')">Add Morning Product</button>
+    <table id="morning">
+        <tr><th>Day</th></tr>
+    </table>
+    
+    <button onclick="addColumn('inbetween')">Add In Between Product</button>
+    <table id="inbetween">
+        <tr><th>Day</th></tr>
+    </table>
+    
+    <button onclick="addColumn('night')">Add Night Product</button>
+    <table id="night">
+        <tr><th>Day</th></tr>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            loadTables();
+        });
+
+        function addColumn(section) {
+            let table = document.getElementById(section);
+            let productName = prompt("Enter product name:");
+            if (!productName) return;
+            
+            let th = document.createElement("th");
+            th.textContent = productName;
+            table.rows[0].appendChild(th);
+            
+            for (let i = 1; i < table.rows.length; i++) {
+                let td = document.createElement("td");
+                td.innerHTML = `<span class='checkmark' onclick='toggleCheck(this, "${section}", ${i-1}, ${table.rows[0].cells.length-1})'>⬜</span>`;
+                table.rows[i].appendChild(td);
+            }
+            saveTables();
+        }
+
+        function addDay(section) {
+            let table = document.getElementById(section);
+            let row = table.insertRow();
+            let dayNum = table.rows.length - 1;
+            row.insertCell(0).textContent = `Day ${dayNum}`;
+            for (let i = 1; i < table.rows[0].cells.length; i++) {
+                let td = row.insertCell(i);
+                td.innerHTML = `<span class='checkmark' onclick='toggleCheck(this, "${section}", ${dayNum-1}, ${i})'>⬜</span>`;
+            }
+            saveTables();
+        }
+
+        function toggleCheck(el, section, day, col) {
+            el.textContent = el.textContent === '✅' ? '⬜' : '✅';
+            el.classList.toggle("checked");
+            saveTables();
+        }
+
+        function saveTables() {
+            let data = {};
+            ['morning', 'inbetween', 'night'].forEach(section => {
+                let table = document.getElementById(section);
+                data[section] = [];
+                for (let i = 1; i < table.rows.length; i++) {
+                    let row = [];
+                    for (let j = 1; j < table.rows[i].cells.length; j++) {
+                        row.push(table.rows[i].cells[j].innerHTML);
+                    }
+                    data[section].push(row);
+                }
+            });
+            localStorage.setItem("skincareTracker", JSON.stringify(data));
+        }
+
+        function loadTables() {
+            let data = JSON.parse(localStorage.getItem("skincareTracker"));
+            if (!data) return;
+            ['morning', 'inbetween', 'night'].forEach(section => {
+                let table = document.getElementById(section);
+                while (table.rows.length > 1) table.deleteRow(1);
+                data[section].forEach((rowData, i) => {
+                    addDay(section);
+                    let row = table.rows[i + 1];
+                    for (let j = 0; j < rowData.length; j++) {
+                        row.cells[j + 1].innerHTML = rowData[j];
+                    }
+                });
+            });
+        }
+    </script>
+    
+    <button onclick="addDay('morning')">Add Day to Morning</button>
+    <button onclick="addDay('inbetween')">Add Day to In Between</button>
+    <button onclick="addDay('night')">Add Day to Night</button>
+</body>
+</html>
